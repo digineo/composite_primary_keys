@@ -15,19 +15,27 @@ module ActiveRecord
             end
           end
 
+          def owner_keys
+            unless defined?(@owner_keys)
+              if reflection.foreign_key.is_a?(Array)
+                @owner_keys = owners.map do |owner|
+                  Array(owner_key_name).map do |owner_key|
+                    owner[owner_key]
+                  end
+                end.compact.uniq
+              else
+                @owner_keys = owners.map do |owner|
+                  owner[owner_key_name]
+                end.uniq.compact
+              end
+            end
+            @owner_keys
+          end
+          private :owner_keys
+
           def associated_records_by_owner(preloader)
             owners_map = owners_by_key
             # CPK
-            # owner_keys = owners_map.keys.compact
-            owner_keys = if reflection.foreign_key.is_a?(Array)
-              owners.map do |owner|
-                Array(owner_key_name).map do |owner_key|
-                  owner[owner_key]
-                end
-              end.compact.uniq
-            else
-              owners_map.keys.compact
-            end
 
             # Each record may have multiple owners, and vice-versa
             records_by_owner = owners.each_with_object({}) do |owner,h|
